@@ -1,72 +1,36 @@
 @{
-    ViewData["Title"] = "Your knowledge, skills and behaviours (KSBs)";
-    ViewData["Section"] = "Ksbs";
-    Layout = "_Layout";
+  ViewData["Title"] = "Your knowledge, skills and behaviours (KSBs)";
+  ViewData["Section"] = "Ksbs";
+  Layout = "_Layout";
 }
-
-<h1 class="govuk-heading-xl">Your knowledge, skills and behaviours (KSBs)</h1>
-
-<form id="searchForm">
-    <label for="searchTerm" class="govuk-visually-hidden">Search for a KSB</label>
-    <input class="app-input app-input--search" type="search" id="searchTerm" name="searchTerm" placeholder="Search KSBs" value="@Model.SearchTerm"  />
-    <input type="submit" value="Search" class="govuk-visually-hidden" />
-</form>
-
-<div class="app-tabs" data-module="app-tabs">
-    <div class="app-page-header app-sticky">
-        <ul class="app-tabs__list">
-            <li class="app-tabs__list-item">
-                <a class="app-tabs__tab tab-knowledge" href="#knowledge">
-                    Knowledge (@Model.KnowledgeCount.ToString())
-                </a>
-            </li>
-            <li class="app-tabs__list-item">
-                <a class="app-tabs__tab tab-skills" href="#skill">
-                    Skills (@Model.SkillCount.ToString())
-                </a>
-            </li>
-            <li class="app-tabs__list-item">
-                <a class="app-tabs__tab tab-behaviours" href="#behaviour">
-                    Behaviours (@Model.BehaviourCount.ToString())
-                </a>
-            </li>
-        </ul>
+<h1 class="govuk-heading-xl">Knowledge, skills and behaviours (KSBs)</h1>
+<partial name="_HelpKSBs.cshtml" />
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+      <partial name="_Filter.cshtml" />
+    <div class="app-tabs" data-module="app-tabs" data-activeTabStatus="status">
+      <ul class="app-tabs__list">
+        <li class="app-tabs__list-item">
+          <a class="app-tabs__tab tab-knowledge" href="#knowledge">
+            Knowledge (@Model.KnowledgeCount.ToString())
+          </a>
+        </li>
+        <li class="app-tabs__list-item">
+          <a class="app-tabs__tab tab-skills" href="#skill">
+            Skills (@Model.SkillCount.ToString())
+          </a>
+        </li>
+        <li class="app-tabs__list-item">
+          <a class="app-tabs__tab tab-behaviours" href="#behaviour">
+            Behaviours (@Model.BehaviourCount.ToString())
+          </a>
+        </li>
+      </ul>
+      <partial name="_KsbsAll.cshtml" />
     </div>
-
-    <div class="app-page-header">
-        <details class="govuk-details govuk-!-margin-top-2">
-            <summary class="govuk-details__summary">
-                <span class="govuk-details__summary-text">
-                    Help with linking KSBs
-                </span>
-            </summary>
-            <div class="govuk-details__text">
-                <p>
-                    As part of your apprenticeship, you need to gain specific knowledge, skills and behaviours (KSBs).
-                    These
-                    are taught in your off-the-job (OTJ) training, and you will be tested on them in your end-point
-                    assessment (EPA). Linking these KSBs to your completed tasks will help you gather evidence.
-                </p>
-                <p>Which of these KSBs will the task help you gain? Select all that apply.</p>
-            </div>
-        </details>
-
-        <partial name="_Filter.cshtml" />
-
-    </div>
-
-    <div class="app-tag-wrap">
-        <div id="filters-set" class="app-tag-scroll"></div>
-    </div>
-    <partial name="_KsbsAll.cshtml" />
+  </div>
+  <div class="govuk-grid-column-one-third">
+    <partial name="_YourKSBs.cshtml" />
+    <partial name="_YourApprenticeship.cshtml" />
+  </div>
 </div>
-
-<script>
-    $( document ).ready(function() {
-        document.getElementById("searchTerm").addEventListener("search", function(event) {
-            $('#searchForm').submit();
-        });
-    });
-</script>
-
-@await Html.PartialAsync("_KsbJs.cshtml")

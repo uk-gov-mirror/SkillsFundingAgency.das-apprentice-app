@@ -7,147 +7,94 @@
     ViewData["Section"] = "Account";
 }
 
-<div class="app-page-header">
-    <div class="app-page-header__back"><a asp-action="YourAccount" asp-controller="Account"
-            class="app-back-link">Back</a>
+@section BackLink {
+    <a class="govuk-back-link app-back-link" asp-controller="Account" asp-action="YourAccount">Back</a>
+}
+
+<h1 class="govuk-heading-xl">Your apprenticeship details</h1>
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+<h2 class="govuk-heading-l">Your details</h2>
+
+<dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+        Name:
+    </dt>
+    <dd class="govuk-summary-list__value">@Model?.Apprentice?.FirstName @Model?.Apprentice?.LastName</dd>
     </div>
-    <h1 class="app-page-header__heading">Your profile</h1>
-    <div class="app-page-header__forward"></div>
-</div>
-
-<h2 class="govuk-heading-l govuk-!-margin-top-4">Your details</h2>
-<div class="app-card">
-    <dl class="app-dl-list">
-        <dt class="govuk-summary-list__key">
-            Name:
-        </dt>
-        <dd class="govuk-summary-list__value">@Model?.Apprentice?.FirstName @Model?.Apprentice?.LastName</dd>
-        <dt class="govuk-summary-list__key">
-            Email address:
-        </dt>
-        <dd class="govuk-summary-list__value">@Model?.Apprentice?.Email</dd>
-        <dt class="govuk-summary-list__key">
-            Date of birth:
-        </dt>
-        <dd class="govuk-summary-list__value">@Model?.Apprentice?.DateOfBirth?.ToGdsFormat()</dd>
-    </dl>
-</div>
-
-<h2 class="govuk-heading-l govuk-!-margin-top-6">Your progress</h2>
-<div class="app-card">
-    <p id="remaining-months"></p>
-    <div class="grid-container">
-        <div class="progress-bar progress-border">
-            <div class="progress" id="progress"></div>
-        </div>
+    <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+        Email address:
+    </dt>
+    <dd class="govuk-summary-list__value">@Model?.Apprentice?.Email</dd>
     </div>
-    <div class="app-progress__wrap">
-        <div class="app-progress" role="progressbar" id="progressBarWrap" aria-label="Your apprenticeship progress" aria-valuenow="0"
-            aria-valuemin="0" aria-valuemax="100">
-            <div class="app-progress__bar" id="progressBar"></div>
-        </div>
-        <div class="app-progress__label" id="progressLabel"></div>
+    <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+        Date of birth:
+    </dt>
+    <dd class="govuk-summary-list__value">@Model?.Apprentice?.DateOfBirth?.ToGdsFormat()</dd>
     </div>
-    @{
-        if (Model.MyApprenticeship.ApprenticeshipType == 0)
-        {
-             <p>Gateway is the time between completing your apprentice training and getting ready for your apprenticeship assessment. </p>
-            <p class="govuk-!-margin-bottom-0">
-                <a class="govuk-link govuk-link--no-visited-state"
-                   href="https://www.apprenticeships.gov.uk/apprentices/understanding-end-point-assessments" rel="noopener"
-                   target="_blank">
-                    What is an apprenticeship assessment?
-                </a>
-            </p>
-        }
-    }    
-    
+</dl>
 
-    <script>
-        // Assuming your apprenticeship length in days is calculated on the server and passed to the view
-        const apprenticeshipLengthInDays = @Model.MyApprenticeship?.ApprenticeshipLength?.Days ?? 0;
-
-        // Assuming a function to convert days to months (approximately)
-        const daysToMonths = (days) => days / 30.417; // This is a rough estimate
-
-
-        // Total duration for EPA in months
-        const totalMonths = daysToMonths(apprenticeshipLengthInDays);
-        var todayDate = new Date();
-        var endDateString = '@Model.MyApprenticeship?.EndDate'; // Ensure this is a valid date string
-        var endDate = endDateString ? new Date(endDateString) : null;
-
-        // calculate time difference
-        var timeDifference = endDate.getTime() - todayDate.getTime();
-
-        // calculate days differences
-        var daysDifference = timeDifference / (1000 * 60 * 60 * 24);
-        // calculate months difference
-        var remainingMonths = daysToMonths(daysDifference);
-        
-        if (remainingMonths < 0) {
-            remainingMonths = 0;
-        }
-
-
-        // Set the progress bar width
-        const progressPercentage = Math.round(((totalMonths - remainingMonths) / totalMonths) * 100);
-        document.addEventListener("DOMContentLoaded", function () {
-            const progressBarWrap = document.getElementById('progressBarWrap');
-            const progressElement = document.getElementById('progressBar');
-            const progressLabel = document.getElementById('progressLabel');
-            progressBarWrap.setAttribute("aria-valuenow", progressPercentage)
-            progressElement.style.width = `${progressPercentage}%`;
-            progressLabel.innerHTML = `${progressPercentage}%`;
-
-            // Display remaining months text
-            const remainingMonthsText = document.getElementById('remaining-months');
-            remainingMonthsText.textContent = `${Math.round(remainingMonths)} months until Gateway.`;
-        });
-    </script>
-</div>
 
 <h2 class="govuk-heading-l">Your apprenticeship</h2>
-<div class="app-card">
-    <dl class="app-dl-list">
+
+    <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Current employer:
         </dt>
         <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.EmployerName</dd>
+        </div>
+        <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Training provider:
         </dt>
         <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.TrainingProviderName</dd>
+        </div>
+        <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Apprenticeship:
         </dt>
         <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.Title</dd>
+        </div>
+        <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Level:
         </dt>
         <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.Level</dd>
-        @{
+        </div>
+        
+            @{
             if (Model.MyApprenticeship.ApprenticeshipType != null)
             {
+        <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">
-                    Apprenticeship Type:
+                    Apprenticeship type:
                 </dt>
                 <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.ApprenticeshipType.GetEnumDescription()</dd>
+        </div>
             }
         }
-       
+        <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Planned training start date:
         </dt>
         <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.StartDate?.ToGdsFormat()</dd>
+        </div>
+            <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Planned training end date:
         </dt>
         <dd class="govuk-summary-list__value">@Model.MyApprenticeship?.EndDate?.ToGdsFormat()</dd>
-
+            </div>
+        <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
             Estimated duration:
         </dt>
         <dd class="govuk-summary-list__value">@(Model.MyApprenticeship?.ApprenticeshipLength?.Days) days</dd>
+        </div>
     </dl>
+    </div>
 </div>

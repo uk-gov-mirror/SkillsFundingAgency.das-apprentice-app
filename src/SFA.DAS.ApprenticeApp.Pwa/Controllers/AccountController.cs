@@ -25,12 +25,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
         public static ApplicationConfiguration _appConfig { get; set; }
         private readonly IOuterApiClient _client;
         private readonly IApprenticeContext _apprenticeContext;
-
-        private const string NewUiOptInCookieName = "SFA.ApprenticeApp.NewUiOptIn";
-        private const string CohortUserSessionKey = "CohortUser";
-        private const string OptInUserSessionKey = "OptInUser";
-        private const string ForceOldUISessionKey = "ForceOldUI";
-
+        
         public AccountController(ILogger<AccountController> logger,
             IStubAuthenticationService stubAuthenticationService,
             ICommitmentsService commitmentsService,
@@ -48,8 +43,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
             _client = client;
             _apprenticeContext = apprenticeContext;
         }
-
-
+        
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Authenticated()
@@ -70,9 +64,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 {
                     return RedirectToAction("AccountNotFound", "Account");
                 }
-
-                SetUiSessionState(apprenticeDetails);
-
+                
                 // Check terms
                 if (apprenticeDetails.Apprentice.TermsOfUseAccepted == false) return RedirectToAction("Index", "Terms");
 
@@ -100,7 +92,6 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 return RedirectToAction("AccountNotFound", "Account");
             }
         }
-
 
         [HttpGet]
         [Route("account-details", Name = RouteNames.StubAccountDetailsGet)]
@@ -135,49 +126,56 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 // Set extended cookie expiration here
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = true, // Persistent cookie survives browser restarts
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddMonths(1), // 1 month expiration
-                    AllowRefresh = true // Allow refreshing the session
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMonths(1),
+                    AllowRefresh = true
                 };
+
+                ApprenticeDetails apprenticeDetails = null;
+                if (!string.IsNullOrEmpty(apprenticeId))
+                {
+                    apprenticeDetails = await _client.GetApprenticeDetails(new Guid(apprenticeId));
+                }
+
+                if (apprenticeDetails?.MyApprenticeship?.Title != null)
+                {
+                    var identity = claims.Identities.First();
+                    identity.AddClaim(new Claim(Constants.ApprenticeshipTitleClaimKey, apprenticeDetails.MyApprenticeship.Title));
+                }
+                else
+                {
+                    // Optional fallback for local testing if no title exists
+                    var identity = claims.Identities.First();
+                    identity.AddClaim(new Claim(Constants.ApprenticeshipTitleClaimKey, "Test Apprenticeship Title"));
+                }
 
                 await HttpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     claims,
-                    authProperties); // Pass the modified properties
+                    authProperties);
 
-                if (!string.IsNullOrEmpty(apprenticeId))
+                if (apprenticeDetails == null)
                 {
-                    var apprenticeDetails = await _client.GetApprenticeDetails(new Guid(apprenticeId));
-                    if (apprenticeDetails == null)
-                    {
-                        return RedirectToAction("AccountNotFound", "Account");
-                    }
-
-                    SetUiSessionState(apprenticeDetails);
-
-                    // Check terms
-                    if (apprenticeDetails.Apprentice.TermsOfUseAccepted == false) return RedirectToAction("Index", "Terms");
-
-                    // Check if cmad completed
-                    var nextStep = await _commitmentsService.HandleConfirmationStatus(apprenticeDetails, Guid.Parse(apprenticeId));
-
-                    if (!string.IsNullOrEmpty(nextStep.ConfirmModelJson))
-                    {
-                        TempData["ConfirmModel"] = nextStep.ConfirmModelJson;
-                    }
-
-                    return nextStep.NavigationType switch
-                    {
-                        CmadNavigationType.WelcomeIndex => RedirectToAction("Index", "Welcome"),
-
-                        CmadNavigationType.ConfirmApprenticeshipDetails => RedirectToAction("ConfirmApprenticeshipDetails", "Cmad"),
-
-                        // Default to ConfirmDetils for any other cases
-                        _ => RedirectToAction("ConfirmDetails", "Cmad")
-                    };
+                    return RedirectToAction("AccountNotFound", "Account");
                 }
                 
-                return RedirectToRoute(RouteNames.StubSignedIn, new { returnUrl = model.ReturnUrl });
+                // Check terms
+                if (apprenticeDetails.Apprentice.TermsOfUseAccepted == false) return RedirectToAction("Index", "Terms");
+
+                // Check if cmad completed
+                var nextStep = await _commitmentsService.HandleConfirmationStatus(apprenticeDetails, Guid.Parse(apprenticeId));
+
+                if (!string.IsNullOrEmpty(nextStep.ConfirmModelJson))
+                {
+                    TempData["ConfirmModel"] = nextStep.ConfirmModelJson;
+                }
+
+                return nextStep.NavigationType switch
+                {
+                    CmadNavigationType.WelcomeIndex => RedirectToAction("Index", "Welcome"),
+                    CmadNavigationType.ConfirmApprenticeshipDetails => RedirectToAction("ConfirmApprenticeshipDetails", "Cmad"),
+                    _ => RedirectToAction("ConfirmDetails", "Cmad")
+                };
             }
             catch (Exception)
             {
@@ -225,20 +223,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 Email = User.Claims.FirstOrDefault(c => c.Type.Equals(ClaimTypes.Email))?.Value.ToLower(),
                 Id = User.Claims.FirstOrDefault(c => c.Type.Equals(ClaimTypes.NameIdentifier))?.Value
             };
-
-            // 1473
-            bool isCohort = IsUserInNewUiCohort(1);
-            HttpContext.Session.SetString(CohortUserSessionKey, isCohort ? "true" : "false");
-
-            // Check opt‑in cookie
-            bool optIn = Request.Cookies[NewUiOptInCookieName] == "true";
-            HttpContext.Session.SetString(OptInUserSessionKey, optIn ? "true" : "false");
-
-            // Set legacy UserType for backward compatibility
-            string userType = (optIn || isCohort) ? "SpecialUser" : "RegularUser";
-            HttpContext.Session.SetString("UserType", userType);
-
-
+            
             return RedirectToAction("Index", "Terms");
         }
 
@@ -265,71 +250,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
         {
             return View();
         }
-
-        [Authorize]
-        [HttpGet]
-        public IActionResult OptInNewUi(string returnUrl)
-        {
-            // Set cookie with long expiry (e.g., 1 year)
-            var cookieOptions = new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddYears(1),
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                Path = "/"
-            };
-            Response.Cookies.Append(NewUiOptInCookieName, "true", cookieOptions);
-
-            // Clear any force‑old‑UI flag (in case user previously opted out)
-            HttpContext.Session.Remove(ForceOldUISessionKey);
-
-            // Set opt‑in flag in session
-            HttpContext.Session.SetString(OptInUserSessionKey, "true");
-            HttpContext.Session.SetString("UserType", "SpecialUser");
-
-            // Clear welcome splash screen cookie so user sees it again
-            if (Request.Cookies[Constants.WelcomeSplashScreenCookieName] != null)
-            {
-                Response.Cookies.Delete(Constants.WelcomeSplashScreenCookieName);
-            }
-
-            _logger.LogInformation("User opted into new UI via button.");
-
-            // Always redirect to Welcome screen to show the welcome message
-            return RedirectToAction("Index", "Welcome");
-        }
-
-        [Authorize]
-        [HttpGet]
-        public IActionResult OptOutNewUi(string returnUrl)
-        {
-            // Delete the opt-in cookie by setting an expired cookie
-            var cookieOptions = new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddDays(-1),
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                Path = "/"
-            };
-            Response.Cookies.Append(NewUiOptInCookieName, "false", cookieOptions);
-
-            // Set a session flag to force old UI for this session
-            HttpContext.Session.SetString("ForceOldUI", "true");
-
-            // Clear any opt-in session flag
-            HttpContext.Session.SetString(OptInUserSessionKey, "false");
-            HttpContext.Session.SetString("UserType", "RegularUser");
-
-            _logger.LogInformation("User opted out of new UI.");
-
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl);
-
-            return RedirectToAction("Index", "Tasks");
-        }
-
+        
         [HttpGet]
         public async Task<IActionResult> YourAccount()
         {
@@ -371,40 +292,5 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
 
             return View(apprenticeAccountModel);
         }
-
-        private void SetUiSessionState(ApprenticeDetails apprenticeDetails)
-        {
-            var isCohort = IsUserInNewUiCohort(apprenticeDetails?.MyApprenticeship?.TrainingProviderId);
-            HttpContext.Session.SetString(CohortUserSessionKey, isCohort ? "true" : "false");
-
-            var optIn = Request.Cookies[NewUiOptInCookieName] == "true";
-            HttpContext.Session.SetString(OptInUserSessionKey, optIn ? "true" : "false");
-
-            var userType = (optIn || isCohort) ? "SpecialUser" : "RegularUser";
-            HttpContext.Session.SetString("UserType", userType);
-        }
-
-        private void SetUiforCohort(long? providerId)
-        {
-            bool isUserInNewUiCohort = IsUserInNewUiCohort(providerId.Value);
-            string userType = isUserInNewUiCohort ? "SpecialUser" : "RegularUser";
-            string logMessage = isUserInNewUiCohort
-                ? $"User provider Id: {providerId} identified as SpecialUser (New UI Cohort)"
-                : $"User provider Id: {providerId} identified as RegularUser";
-
-            HttpContext.Session.SetString("UserType", userType);
-            _logger.LogInformation(logMessage);
-        }
-
-        public bool IsUserInNewUiCohort(long? providerId)
-        {
-            if (!providerId.HasValue)
-            {
-                return false;
-            }
-
-            return new long[] { }.Contains(providerId.Value);
-        }
     }
-
 }
