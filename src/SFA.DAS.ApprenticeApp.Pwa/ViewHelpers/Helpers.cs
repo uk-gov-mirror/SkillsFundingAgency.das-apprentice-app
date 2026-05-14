@@ -36,9 +36,4 @@ namespace SFA.DAS.ApprenticeApp.Pwa.ViewHelpers
         }
     }
     
-    public static class SessionExtensions
-    {
-        public static bool IsSpecialUser(this ISession session) =>
-            session?.IsAvailable == true && session.GetString("UserType") == "SpecialUser";
-    }  
 }

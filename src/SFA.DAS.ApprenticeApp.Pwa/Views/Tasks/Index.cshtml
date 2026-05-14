@@ -3,80 +3,47 @@
 @using SFA.DAS.ApprenticeApp.Web.Extensions
 @using Newtonsoft.Json
 @inject ApplicationConfiguration applicationConfiguration
+
 @{
     ViewData["Title"] = "Tasks";
     ViewData["Section"] = "Tasks";
     Layout = "_Layout";
 }
-
-<div id="add-edit-wrapper" tabindex="0">
-    <div class="loader" style="margin-bottom: 40px"></div>
-</div>
-
-<div class="app-page-header app-sticky">
-    <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">Your tasks</h1>
-</div>
-
-<div class="app-tabs" data-module="app-tabs" data-activeTabStatus="status">
-    <div class="app-page-header app-page-header--align-bottom">
-        <ul class="app-tabs__list">
-            <li class="app-tabs__list-item">
-                <a class="app-tabs__tab todo" href="#tasks-todo">
-                    To do
-                </a>
-            </li>
-            <li class="app-tabs__list-item">
-                <a class="app-tabs__tab done" href="#tasks-done">
-                    Done
-                </a>
-            </li>
-        </ul>
-        <div class="app-dropdown app-dropdown--sort" data-module="app-dropdown">
-            <button class="app-dropdown__toggle" aria-expanded="false">
-                <span class="app-dropdown__toggle-sort-label">Sort by:</span>
-                <span class="app-dropdown__toggle-sort-value" id="sortby">@Model.Sort.Replace("_", " ")</span>
-            </button>
-            <div class="app-dropdown__menu">
-                <ul class="app-dropdown__menu-list">
-                    <li>
-                        <a href="?sort=date_due" class="app-dropdown__menu-link due-date-menu-item">
-                            Date due
-                        </a>
-                    </li>
-                    <li>
-                        <a href="?sort=recently_added" class="app-dropdown__menu-link recently-added-menu-item">
-                            Recently added
-                        </a>
-                    </li>
-                </ul>
+<h1 class="govuk-heading-xl">Tasks</h1>
+<partial name="_HelpTasks.cshtml" />
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        <div class="app-tabs" data-module="app-tabs" data-activeTabStatus="status">
+            <ul class="app-tabs__list">
+                <li class="app-tabs__list-item">
+                    <a class="app-tabs__tab todo" href="#tasks-todo">
+                        To do  <span id="todo-task-count"></span>
+                    </a>
+                </li>
+                <li class="app-tabs__list-item">
+                    <a class="app-tabs__tab done" href="#tasks-done">
+                        Done  <span id="done-task-count"></span>
+                    </a>
+                </li>
+            </ul>
+            <div class="app-tabs__panel" id="tasks-todo">
+                <partial name="_Filter.cshtml" view-data='@(new ViewDataDictionary(ViewData) { { "Tab", "todo" } })' />
+                <div data-fetch="true" data-url="@Url.Action("ToDoTasks", "Tasks")">
+                    <p class="govuk-hint">Loading</p>
+                </div>
+            </div>
+            <div class="app-tabs__panel" id="tasks-done">
+                <partial name="_Filter.cshtml" view-data='@(new ViewDataDictionary(ViewData) { { "Tab", "done" } })' />
+                <div data-fetch="true" data-url="@Url.Action("DoneTasks", "Tasks")">
+                    <p class="govuk-hint">Loading</p>
+                </div>
             </div>
         </div>
-        <partial name="_Filter.cshtml" />
-    </div>
-    <div class="app-tag-wrap">
-        <div id="filters-set-tasks" class="app-tag-scroll"></div>
     </div>
 
-    <div class="app-tabs__panel" id="tasks-todo">
-        <div id="tasks-todo__tasks">
-            <div class="loader"></div>
-        </div>
-        <a data-status-id="0" href="#top" class="app-fab add-btn">
+    <div class="govuk-grid-column-one-third app-column-sticky">
+        <a href="@Url.Action("Add", "Tasks")" class="govuk-button app-button--full-width app-fab">
             <span>Add a task</span>
         </a>
     </div>
-
-    <div class="app-tabs__panel" id="tasks-done">
-        <div id="tasks-done__tasks">
-            <div class="loader"></div>
-        </div>
-        <a data-status-id="1" href="#top" class="app-fab add-btn">
-            <span>Add a task</span>
-        </a>
-    </div>
-
-
 </div>
-
-
-@await Html.PartialAsync("_TasksJs.cshtml", Model)

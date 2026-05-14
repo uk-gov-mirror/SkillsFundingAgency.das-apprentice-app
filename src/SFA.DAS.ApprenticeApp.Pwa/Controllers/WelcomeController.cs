@@ -9,7 +9,6 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
     [Authorize]
     public class WelcomeController : Controller
     {
-        
         public WelcomeController() { }
         
         public IActionResult Index()
@@ -30,12 +29,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
             }
             else
             {
-                var isNewUi = Claims.GetClaim(HttpContext, Constants.NewUiEnabledClaimKey);
-                if (string.Equals(isNewUi, "true", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Ksb");
-                }
-                return RedirectToAction("Index", "Tasks");
+                return RedirectToAction("Index", "Ksb");
             }
         }
     }
