@@ -22,18 +22,12 @@ namespace SFA.DAS.ApprenticeApp.Pwa.ViewComponents
             {
                 var notificationValue = 0;
                 
-                var taskNotificationsResult = await _client.GetTaskReminderNotifications(new Guid(apprenticeId));
-                if (taskNotificationsResult != null && taskNotificationsResult.TaskReminders.Count > 0)
+                var learnerNotificationsSeen = Request.Cookies["SFA.DAS.ApprenticeApp.LearnerNotificationsSeen"] != null;
+                if (!learnerNotificationsSeen)
                 {
-                    notificationValue += taskNotificationsResult.TaskReminders.Count;
+                    notificationValue += 3;
                 }
-                
-                var surveryCookie = Request.Cookies["SFA.DAS.ApprenticeApp.SurveyNotificationSeen"];
-                if (surveryCookie == null)
-                {
-                    notificationValue++;
-                }
-                    
+               
                 return View("_NotificationCount", notificationValue);
                 
             }

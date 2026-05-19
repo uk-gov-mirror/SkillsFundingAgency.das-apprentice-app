@@ -1,0 +1,33 @@
+﻿@model SFA.DAS.ApprenticeApp.Pwa.ViewModels.LearnerNotificationViewModel
+
+@{
+    ViewData["Title"] = "Notifications";
+    ViewData["Section"] = "Notifications";
+    ViewBag.HideNavigation = true;
+}
+
+@section BackLink {
+    <a asp-action="Index" asp-controller="Notifications" class="govuk-back-link app-back-link">
+        Back without deleting
+    </a>
+}
+
+<h1 class="govuk-heading-xl">Are you sure you want to delete this notification?</h1>
+
+<form asp-action="DeleteLearnerNotification" method="post">
+
+    <input type="hidden" asp-for="NotificationId" />
+
+    <div class="govuk-button-group app-button-group">
+
+        <a asp-action="Index" asp-controller="Notifications" class="govuk-back-link app-back-link">
+            Back without deleting
+        </a>
+
+        <button type="submit" class="govuk-button govuk-button--warning" data-module="govuk-button">
+            Delete this notification
+        </button>
+
+    </div>
+
+</form>

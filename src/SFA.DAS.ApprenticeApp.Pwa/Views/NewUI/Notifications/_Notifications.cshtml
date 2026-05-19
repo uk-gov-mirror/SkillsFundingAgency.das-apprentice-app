@@ -1,29 +1,61 @@
-﻿@using SFA.DAS.ApprenticeApp.Pwa.ViewModels;
-@model NotificationPageModel
+﻿@model SFA.DAS.ApprenticeApp.Pwa.ViewModels.NotificationPageModel
 
-<!--todo surveys -->
-@if (Model.SurveyNotificationSeen == false)
+@if (Model.LearnerNotifications != null && Model.LearnerNotifications.Any())
 {
-    <div id="notification-8039" class="app-notification">
-        <h2 class="govuk-heading-m">
-            <a class="govuk-link govuk-link--no-visited-state" href="https://dferesearch.fra1.qualtrics.com/jfe/form/SV_9BLPhxEaYanAwZM" rel="external" target="_blank">Give us feedback</a>
-        </h2>
-        <p>We're improving this app - <a href="https://dferesearch.fra1.qualtrics.com/jfe/form/SV_9BLPhxEaYanAwZM" class="govuk-link govuk-link--no-visited-state" rel="external" target="_blank">take our survey</a> </p>
-        <div class="app-flex-align-right">
-            <a asp-action="ConfirmDeleteSurveyNotification" asp-controller="Notifications" class="govuk-link app-link--destructive">
-                <span class="app-icon-item">
-                    <svg width="24" height="24" class="app-icon-item__icon">
-                        <use href="/assets/icons/sprite.svg#delete"></use>
+    @foreach (var notification in Model.LearnerNotifications)
+    {
+        <div id="notification-@notification.NotificationId" class="app-notification">
+            <h2 class="govuk-heading-m">
+                <a href="@(string.IsNullOrEmpty(notification.Link) ? "#" : notification.Link)"
+                   class="govuk-link">
+                    @notification.Heading
+                </a>
+            </h2>
+
+            <div class="govuk-!-margin-bottom-3">
+                    @if (notification.IsNew)
+                    {
+                    <strong class="govuk-tag govuk-tag--red">New</strong>
+                    }
+                @if (notification.Urgency == "High")
+                {
+                    <strong class="govuk-tag govuk-tag--red">High priority</strong>
+                }
+                @if (!string.IsNullOrEmpty(notification.Category))
+                {
+                    <strong class="govuk-tag govuk-tag--grey">@notification.Category</strong>
+                }
+            </div>
+
+                @if (!string.IsNullOrEmpty(notification.Body))
+                {
+                <p>@notification.Body</p>
+                }
+                @if (notification.TimeReceived.HasValue)
+                {
+                <div class="app-icon-item govuk-body-s govuk-!-margin-bottom-0">
+                    <svg width="20" height="20" class="app-icon-item__icon">
+                        <use href="/assets/icons/sprite.svg#calendar"></use>
                     </svg>
-                    <span class="app-icon-action__label">Delete<span class="govuk-visually-hidden"> Fill out survey</span></span>
-                </span>
-            </a>
+                    <span class="app-icon-item__text">
+                        Received @notification.TimeReceived.Value.ToString("d MMMM yyyy, h:mmtt")
+                    </span>
+                </div>
+                }
+
+            <div class="app-flex-align-right">
+                <a asp-action="ConfirmDeleteLearnerNotification"
+                   asp-controller="Notifications"
+                   asp-route-notificationId="@notification.NotificationId"
+                   class="govuk-link app-link--destructive">
+                    Delete
+                    <span class="govuk-visually-hidden"> @notification.Heading</span>
+                </a>
+            </div>
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
         </div>
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    </div>
+    }
 }
-
-
 @if (Model.TaskReminders != null)
 {
     @foreach (var notification in Model.TaskReminders)
@@ -67,16 +99,46 @@
                 </li>
             </ul>
             <div class="app-flex-align-right">
-                <a asp-action="ConfirmDeleteNotification" asp-controller="Notifications" asp-route-taskId="@notification.TaskId" class="govuk-link app-link--destructive">
-                    <span class="app-icon-item">
-                        <svg width="24" height="24" class="app-icon-item__icon">
-                            <use href="/assets/icons/sprite.svg#delete"></use>
-                        </svg>
-                        <span class="app-icon-action__label">Delete<span class="govuk-visually-hidden"> @notification.Title</span></span>
-                    </span>
+                <a asp-action="ConfirmDeleteNotification"
+                   asp-controller="Notifications"
+                   asp-route-taskId="@notification.TaskId"
+                   class="govuk-link app-link--destructive">
+                    Delete
+                    <span class="govuk-visually-hidden"> @notification.Title</span>
                 </a>
             </div>
             <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
         </div>
     }
 }
+@if (Model.SurveyNotificationSeen == false)
+{
+    <div id="notification-8039" class="app-notification">
+        <h2 class="govuk-heading-m">
+            <a class="govuk-link" href="https://dferesearch.fra1.qualtrics.com/jfe/form/SV_9BLPhxEaYanAwZM" target="_blank" rel="noreferrer noopener">
+                Give us feedback <span class="govuk-visually-hidden">(opens in new tab)</span>
+            </a>
+        </h2>
+        <p>
+            We're improving this app -
+            <a href="https://dferesearch.fra1.qualtrics.com/jfe/form/SV_9BLPhxEaYanAwZM" class="govuk-link" target="_blank" rel="noreferrer noopener">
+                take our survey <span class="govuk-visually-hidden">(opens in new tab)</span>
+            </a>
+        </p>
+        <div class="app-flex-align-right">
+            <a asp-action="ConfirmDeleteSurveyNotification"
+               asp-controller="Notifications"
+               class="govuk-link app-link--destructive">
+                Delete
+                <span class="govuk-visually-hidden"> Fill out survey</span>
+            </a>
+        </div>
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    </div>
+}
+
+<script>
+    window.addEventListener("beforeunload", function () {
+        navigator.sendBeacon("/Notifications/MarkLearnerNotificationsSeen");
+    });
+</script>
