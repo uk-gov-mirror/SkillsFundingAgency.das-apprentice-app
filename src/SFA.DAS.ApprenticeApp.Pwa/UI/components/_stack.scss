@@ -37,6 +37,14 @@
   }
 }
 
+.app-stack__description {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1rem;
+  font-weight: normal;
+  color: settings.$govuk-text-colour;
+}
+
 .app-stack__link:focus,
 .app-stack__link:active {
   color: #000;
