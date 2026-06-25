@@ -22,6 +22,7 @@
                     <li class="app-stack__list-item">
                         <a asp-controller="Support" asp-action="ArticlesPage" asp-route-slug="@item.Slug" class="app-stack__link">
                             @item.Heading
+                            <span class="app-stack__description">@item.Description</span>
                         </a>
                     </li>
                 }
