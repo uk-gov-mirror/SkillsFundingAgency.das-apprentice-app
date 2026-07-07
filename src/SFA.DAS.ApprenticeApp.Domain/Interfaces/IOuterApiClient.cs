@@ -118,5 +118,8 @@ namespace SFA.DAS.ApprenticeApp.Domain.Interfaces
 
         [Post("/apprentices/{apprenticeId}/progress/tasks/taskReminders/{taskId}/{statusId}")]
         Task UpdateTaskReminderStatus([Path] Guid apprenticeId, [Path] int taskId, [Path] int statusId);
+
+        [Get("/api/learner/{accountIdentifier}/notifications")]
+        Task<List<LearnerNotification>> GetLearnerNotifications([Path] Guid accountIdentifier);
     }
 }

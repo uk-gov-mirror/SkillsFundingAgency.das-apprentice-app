@@ -43,6 +43,9 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                     }                    
                     
                     var notificationsResult = await _client.GetTaskReminderNotifications(new Guid(apprenticeId));
+
+                    var learnerNotifications = await _client.GetLearnerNotifications(new Guid(apprenticeId));
+
                     var vm = new NotificationPageModel
                     {
                         TaskReminders = notificationsResult.TaskReminders,
