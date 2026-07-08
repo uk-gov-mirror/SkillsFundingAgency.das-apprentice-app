@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using SFA.DAS.ApprenticeApp.Domain.Interfaces;
 using SFA.DAS.ApprenticeApp.Domain.Models;
 using SFA.DAS.ApprenticeApp.Pwa.Helpers;
+using SFA.DAS.ApprenticeApp.Pwa.ViewHelpers;
 using SFA.DAS.ApprenticeApp.Pwa.Models;
 using SFA.DAS.ApprenticeApp.Pwa.Services;
 using SFA.DAS.ApprenticeApp.Pwa.ViewModels;
@@ -112,7 +113,9 @@ public class CommitmentsService : ICommitmentsService
             TrainingProviderId = revision.TrainingProviderId,
             Apprenticeship = revision.CourseName,
             Level = revision.CourseLevel.ToString(),
-            Type = revision.ApprenticeshipType.HasValue ? revision.ApprenticeshipType.Value.ToString() : string.Empty,
+            Type = revision.ApprenticeshipType.HasValue
+                ? ((ApprenticeshipType)revision.ApprenticeshipType.Value).GetEnumDescription() ?? string.Empty
+                : string.Empty,
             StartDate = revision.PlannedStartDate.ToString(),
             EndDate = revision.PlannedEndDate.ToString(),
         };
