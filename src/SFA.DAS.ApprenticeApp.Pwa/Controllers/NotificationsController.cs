@@ -49,6 +49,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                     var vm = new NotificationPageModel
                     {
                         TaskReminders = notificationsResult.TaskReminders,
+                        LearnerNotifications = learnerNotifications,
                         SurveyNotificationSeen = Convert.ToBoolean(surveryCookieValue)
                     };
                     return View(vm);
