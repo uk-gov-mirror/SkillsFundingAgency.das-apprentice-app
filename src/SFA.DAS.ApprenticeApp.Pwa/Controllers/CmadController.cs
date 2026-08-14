@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using SFA.DAS.ApprenticeApp.Domain.Interfaces;
 using SFA.DAS.ApprenticeApp.Domain.Models;
 using SFA.DAS.ApprenticeApp.Pwa.Helpers;
@@ -181,6 +182,20 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                         TrainingProviderName = revision.TrainingProviderName,
                         StandardUId = commitmentsApprenticeship.StandardUId
                     });
+                } else
+                {
+                    var patch = new JsonPatchDocument<MyApprenticeship>();
+
+                    patch.Replace(x => x.ApprenticeshipId, revision.CommitmentsApprenticeshipId);
+                    patch.Replace(x => x.Uln, model.Uln);
+                    patch.Replace(x => x.EmployerName, revision.EmployerName);
+                    patch.Replace(x => x.StartDate, revision.PlannedStartDate);
+                    patch.Replace(x => x.EndDate, revision.PlannedEndDate);
+                    patch.Replace(x => x.TrainingProviderId, revision.TrainingProviderId);
+                    patch.Replace(x => x.TrainingProviderName, revision.TrainingProviderName);
+                    patch.Replace(x => x.StandardUId, commitmentsApprenticeship.StandardUId);
+
+                    await _client.PatchMyApprenticeship(apprenticeId, patch);
                 }
                
                 await _client.ConfirmApprenticeshipDetails(apprenticeId, apprenticeshipId, revisionId, confs);               
