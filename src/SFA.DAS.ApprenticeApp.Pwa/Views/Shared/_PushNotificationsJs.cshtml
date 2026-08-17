@@ -29,7 +29,13 @@
             console.log('Notification dialogue removed successfully');
         }
         
-        await Notification.requestPermission();
+        const permission = await Notification.requestPermission();
+
+        if (permission === "granted") {
+            const worker = await navigator.serviceWorker.getRegistration();
+            await registerPush(worker);
+        }
+
         displayNotificationButtons();
     }
 
@@ -47,7 +53,9 @@
                 return sendSubscriptionToServer(subscription, false);
             })
             .catch((error) => {
-                console.error("Failed to subscribe the user: ", error);
+                console.error("Failed to subscribe the user:", error);
+                alert(error.message);
+                throw error;
             });
     }
 
