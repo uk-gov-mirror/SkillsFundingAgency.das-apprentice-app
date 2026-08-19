@@ -22,13 +22,7 @@
     }
     async function requestNotificationPermission() {
 
-        // Remove the notifications dialogue on continue click
-        const notificationDiv = document.querySelector('.enable-notifications');
-        if (notificationDiv) {
-            notificationDiv.remove();
-            console.log('Notification dialogue removed successfully');
-        }
-        
+        // The modal closes itself via data-modal-close on the Continue button.
         const permission = await Notification.requestPermission();
 
         if (permission === "granted") {

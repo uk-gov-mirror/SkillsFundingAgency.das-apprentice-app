@@ -1,8 +1,13 @@
-﻿<div class="enable-notifications app-modal app-modal--visible">
-    <div class="app-modal__dialog" role="dialog" aria-modal="true">
+﻿<div class="enable-notifications app-modal app-modal--visible"
+     id="push-notification-prompt"
+     data-module="app-modal">
+    <div class="app-modal__dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="push-notification-prompt-heading">
         <div class="app-modal__content">
 
-            <h2 class="govuk-heading-l">
+            <h2 class="govuk-heading-l" id="push-notification-prompt-heading">
                 Allow push notifications from Your Apprenticeship app
             </h2>
 
@@ -17,6 +22,7 @@
 
             <button type="button"
                     class="govuk-button"
+                    data-modal-close
                     onclick="requestNotificationPermission()">
                 Continue
             </button>
