@@ -26,7 +26,7 @@
   display: inline-block;
   margin-bottom: 10px;
   &:visited {
-    color: var(--govuk-text-colour, #0b0c0c);
+    color: var(--govuk-link-colour);
   }
 }
 
@@ -43,15 +43,20 @@
   
   .app-tabs__list-item {
     border-bottom: 4px solid transparent;
+    margin: 0;
     transition: border-bottom-color 0.3s ease;
     &--selected {
       border-bottom-color: settings.$govuk-brand-colour;
     }
   }
 
+  .app-tabs__list-item:before {
+    display: none;
+  }
 
   .app-tabs__tab {
     padding: .5rem 0;
+    margin: 0;
     cursor: pointer;
     text-decoration: none;
     display: block;
