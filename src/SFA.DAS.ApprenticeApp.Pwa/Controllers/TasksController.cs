@@ -130,6 +130,34 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
             return PartialView("_TasksNotStarted", "Done");
         }
         
+        // The apprentice types the date into three separate inputs. The hidden field
+        // holding the assembled value is only filled in by script, so the parts are what
+        // we read; the fallback covers a posted date that is not a real one.
+        private DateTime? GetPostedDate(DateTime? fallback)
+        {
+            var day = Request.Form["duedate-day"].FirstOrDefault();
+            var month = Request.Form["duedate-month"].FirstOrDefault();
+            var year = Request.Form["duedate-year"].FirstOrDefault();
+
+            if (int.TryParse(day, out var d) && int.TryParse(month, out var m) && int.TryParse(year, out var y))
+            {
+                try
+                {
+                    return new DateTime(y, m, d);
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // Not a real date, so keep whatever the form was opened with.
+                }
+            }
+
+            return fallback?.Date;
+        }
+
+        // An unset or unreadable time leaves the date at midnight rather than throwing.
+        private TimeSpan GetPostedTime() =>
+            TimeSpan.TryParse(Request.Form["time"].FirstOrDefault(), out var time) ? time : TimeSpan.Zero;
+
         private async Task<List<ApprenticeTask>?> GetTasks(string apprenticeId, int status, string filtersCookieName, string? sort)
         {
             var taskResult = await _client.GetApprenticeTasks(new Guid(apprenticeId), status, new DateTime(2010, 1, 1), new DateTime(2030, 1, 1));
@@ -211,30 +239,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 task.ApprenticeshipId = apprId;
             }
 
-            var day = Request.Form["duedate-day"].FirstOrDefault();
-            var month = Request.Form["duedate-month"].FirstOrDefault();
-            var year = Request.Form["duedate-year"].FirstOrDefault();
-            var time = Request.Form["time"].FirstOrDefault();
-
-            if (int.TryParse(day, out var d) && int.TryParse(month, out var m) && int.TryParse(year, out var y))
-            {
-                try
-                {
-                    var datePart = new DateTime(y, m, d);
-                    if (TimeSpan.TryParse(time, out var timePart))
-                    {
-                        task.DueDate = datePart + timePart;
-                    }
-                    else
-                    {
-                        task.DueDate = datePart;
-                    }
-                }
-                catch
-                {
-                    // ignore invalid date parts
-                }
-            }
+            task.DueDate = GetPostedDate(null) + GetPostedTime();
 
             if (int.TryParse(Request.Form["ReminderValue"].FirstOrDefault(), out var reminder))
             {
@@ -357,11 +362,14 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 {
                     if (task.Status == Domain.Models.TaskStatus.Done)
                     {
-                        task.CompletionDateTime = task.CompletionDateTime.Value.Date + TimeSpan.Parse(HttpContext.Request.Form["time"]);
+                        // A completed task keeps its own completion day and takes only the
+                        // time from the form, which is what the time field is showing.
+                        task.CompletionDateTime = task.CompletionDateTime?.Date + GetPostedTime();
+                        task.DueDate = GetPostedDate(task.DueDate);
                     }
                     else
                     {
-                        task.DueDate = task.DueDate.Value.Date + TimeSpan.Parse(HttpContext.Request.Form["time"]);
+                        task.DueDate = GetPostedDate(task.DueDate) + GetPostedTime();
                     }
                     await _client.UpdateApprenticeTask(new Guid(apprenticeId), task.TaskId, task);
                 }
@@ -427,7 +435,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                     }
 
                     task.ApprenticeAccountId = new Guid(apprenticeId);
-                    task.DueDate += TimeSpan.Parse(HttpContext.Request.Form["time"]);
+                    task.DueDate = GetPostedDate(task.DueDate) + GetPostedTime();
                     task.ApprenticeshipCategoryId ??= 1;
 
                     if (!string.IsNullOrEmpty(task.Title))

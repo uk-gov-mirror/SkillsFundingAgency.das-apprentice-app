@@ -1,4 +1,4 @@
-@using SFA.DAS.ApprenticeApp.Domain.Models
+﻿@using SFA.DAS.ApprenticeApp.Domain.Models
 @using SFA.DAS.ApprenticeApp.Pwa.ViewHelpers
 @model SFA.DAS.ApprenticeApp.Pwa.ViewModels.EditTaskPageModel
 @{
@@ -27,7 +27,7 @@
                     </div>
                 </div>
             </div>
-            <form action="@Url.Action("Edit", "Tasks")" method="post" enctype="multipart/form-data" class="form" data-module="task-validation" novalidate>
+            <form action="@Url.Action("Edit", "Tasks")" method="post" enctype="multipart/form-data" class="form" data-module="task-validation">
                 <input type="hidden" id="TaskId" name="TaskId" value="@Model.Task.TaskId" />
                 <input type="hidden" id="Status" name="Status" value="@Model.Task.Status" />
                 <input type="hidden" id="StatusId" name="StatusId" value="@Model.StatusId" />
