@@ -193,7 +193,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> Edit(int id, int status = 0)
+        public async Task<IActionResult> Edit(int id, int status = 0, string? returnUrl = null)
         {
             var apprenticeId = _apprenticeContext.ApprenticeId;
 
@@ -208,7 +208,10 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                     Categories = taskdata.TaskCategories?.TaskCategories,
                     KsbProgressData = taskdata.KsbProgress,
                     LinkedKsbGuids = guids.Any() ? string.Join(",", guids) : string.Empty,
-                    StatusId = status
+                    StatusId = status,
+                    // Only a local path is honoured, so the querystring cannot be used to
+                    // send the apprentice off to another site.
+                    ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : null
                 };
 
                 if(taskdata.Task.TaskReminders != null && taskdata.Task.TaskReminders.Count == 1)

@@ -328,6 +328,37 @@ namespace SFA.DAS.ApprenticeApp.Pwa.UnitTests.Controllers.Tasks
         }
 
         [Test, MoqAutoData]
+        public async Task Edit_Keeps_A_Local_ReturnUrl([Greedy] TasksController controller)
+        {
+            SetUpUrlHelper(controller);
+
+            var result = await controller.Edit(1, 0, "/Ksb/AddUpdateKsbProgress/123") as ViewResult;
+
+            var model = result.Model.Should().BeOfType<EditTaskPageModel>().Subject;
+            model.ReturnUrl.Should().Be("/Ksb/AddUpdateKsbProgress/123");
+        }
+
+        [Test, MoqAutoData]
+        public async Task Edit_Drops_A_ReturnUrl_To_Another_Site([Greedy] TasksController controller)
+        {
+            SetUpUrlHelper(controller);
+
+            var result = await controller.Edit(1, 0, "https://example.com/phishing") as ViewResult;
+
+            var model = result.Model.Should().BeOfType<EditTaskPageModel>().Subject;
+            model.ReturnUrl.Should().BeNull();
+        }
+
+        // The framework supplies Url at runtime; a unit test has to provide it.
+        private static void SetUpUrlHelper(TasksController controller)
+        {
+            var urlHelper = new Mock<IUrlHelper>();
+            urlHelper.Setup(u => u.IsLocalUrl(It.IsAny<string>()))
+                .Returns<string>(url => !string.IsNullOrEmpty(url) && url.StartsWith("/") && !url.StartsWith("//"));
+            controller.Url = urlHelper.Object;
+        }
+
+        [Test, MoqAutoData]
         public async Task Edit_Returns_View_NoApprenticeId(
     [Frozen] Mock<IApprenticeContext> apprenticeContext,
     [Greedy] TasksController controller)
