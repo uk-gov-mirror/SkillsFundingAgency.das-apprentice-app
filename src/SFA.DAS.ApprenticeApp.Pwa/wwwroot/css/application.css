@@ -8901,6 +8901,9 @@ p + .govuk-heading-s,
 .js-enabled .show-if-js-enabled {
   display: block;
 }
+.js-enabled .show-if-js-enabled[hidden] {
+  display: none;
+}
 
 
 
@@ -8928,6 +8931,11 @@ p + .govuk-heading-s,
   gap: 1.5rem;
   position: relative;
   bottom: -1rem;
+}
+
+.app-article-actions__form {
+  display: flex;
+  margin: 0;
 }
 
 .app-article-actions__button {

@@ -7,5 +7,11 @@
 .js-enabled {
   .show-if-js-enabled {
     display: block;
+
+    // Without this, the class beats [hidden] on specificity and script that
+    // hides one of these elements has no effect.
+    &[hidden] {
+      display: none;
+    }
   }
 }
