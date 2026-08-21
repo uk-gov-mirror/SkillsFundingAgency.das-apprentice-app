@@ -614,10 +614,30 @@ namespace SFA.DAS.ApprenticeApp.Pwa.UnitTests.Controllers.Tasks
             string sortoder = "sort";
             int year = 2024;
 
-            var result = controller.Index(sortoder, year);
+            var result = await controller.Index(sortoder, year);
 
             result.Should().NotBeNull();
 
+        }
+
+        [Test, MoqAutoData]
+        public async Task Task_Index_Renders_Both_Task_Lists(
+          [Greedy] TasksController controller)
+        {
+            var httpContext = new DefaultHttpContext();
+            var apprenticeIdClaim = new Claim(Constants.ApprenticeIdClaimKey, Guid.NewGuid().ToString());
+            httpContext.User = new ClaimsPrincipal(new[] { new ClaimsIdentity(new[] { apprenticeIdClaim }) });
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
+
+            var result = await controller.Index(null, 0) as ViewResult;
+
+            var model = result.Model.Should().BeOfType<TasksBaseModel>().Subject;
+            model.ToDoTasks.Should().NotBeNullOrEmpty();
+            model.DoneTasks.Should().NotBeNullOrEmpty();
         }
 
         [Test, MoqAutoData]

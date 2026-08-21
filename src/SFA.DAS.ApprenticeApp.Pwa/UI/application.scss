@@ -1,7 +1,6 @@
 @use "govuk/index" with (
   $govuk-font-family: "Inter",
   $govuk-global-styles: true,
-
 );
 @use "core";
 @use "components";

@@ -5,6 +5,10 @@
 }
 
 .js-enabled {
+  .hide-if-js-enabled {
+    display: none;
+  }
+
   .show-if-js-enabled {
     display: block;
 

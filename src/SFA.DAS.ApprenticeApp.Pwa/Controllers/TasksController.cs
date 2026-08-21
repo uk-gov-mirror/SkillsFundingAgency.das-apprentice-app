@@ -29,7 +29,7 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult Index(string sort, int year)
+        public async Task<IActionResult> Index(string sort, int year)
         {
             int yearSet = DateTime.Now.Year;
             string sortSet = "date_due";
@@ -81,6 +81,16 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
                 Sort = sortSet
             };
 
+            var apprenticeId = _apprenticeContext.ApprenticeId;
+
+            if (!string.IsNullOrEmpty(apprenticeId))
+            {
+                var sortOrder = !string.IsNullOrEmpty(sort) ? sort : sortCookie;
+
+                vm.ToDoTasks = await GetTasks(apprenticeId, Constants.ToDoStatus, Constants.TaskFiltersTodoCookieName, sortOrder);
+                vm.DoneTasks = await GetTasks(apprenticeId, Constants.DoneStatus, Constants.TaskFiltersDoneCookieName, sortOrder);
+            }
+
             return View(vm);
         }
 
@@ -92,50 +102,12 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
 
             if (!string.IsNullOrEmpty(apprenticeId))
             {
-                int year = DateTime.Now.Year;
-                var yearCookie = Request.Cookies[Constants.TaskFilterYearCookieName];
-                if (yearCookie != null)
+                var tasks = await GetTasks(apprenticeId, Constants.ToDoStatus, Constants.TaskFiltersTodoCookieName, Request.Cookies[Constants.TaskFilterSortCookieName]);
+
+                if (tasks != null)
                 {
-                    year = int.Parse(Request.Cookies[Constants.TaskFilterYearCookieName]);
+                    return PartialView("_TasksToDo", new TasksPageModel { Year = DateTime.Now.Year, Tasks = tasks });
                 }
-
-                var taskResult = await _client.GetApprenticeTasks(new Guid(apprenticeId), Constants.ToDoStatus, new DateTime(2010, 1, 1), new DateTime(2030, 1, 1));
-
-                if (taskResult == null || taskResult.Tasks.Count == 0)
-                {
-                    return PartialView("_TasksNotStarted", "ToDo");
-                }
-
-                if (Request.Cookies[Constants.TaskFiltersTodoCookieName] != null)
-                {
-                    var filterTasks = Filter.FilterTaskResults(taskResult.Tasks, Request.Cookies[Constants.TaskFiltersTodoCookieName]);
-
-                    if (filterTasks.HasFilterRun.Equals(true))
-                    {
-                        taskResult.Tasks = filterTasks.FilteredTasks;
-                    }
-                }
-
-                // sorting
-                var sortingValue = Request.Cookies[Constants.TaskFilterSortCookieName];
-                if (sortingValue != null)
-                {
-                    taskResult.Tasks = sortingValue switch
-                    {
-                        "due_date" => taskResult.Tasks.OrderBy(x => x.DueDate).ToList(),
-                        "recently_added" => taskResult.Tasks.OrderByDescending(x => x.TaskId).ToList(),
-                        _ => taskResult.Tasks.OrderBy(x => x.DueDate).ToList(),
-                    };
-                }
-
-                var vm = new TasksPageModel
-                {
-                    Year = DateTime.Now.Year,
-                    Tasks = taskResult.Tasks
-
-                };
-
-                return PartialView("_TasksToDo", vm);
             }
             return PartialView("_TasksNotStarted", "ToDo");
         }
@@ -148,51 +120,47 @@ namespace SFA.DAS.ApprenticeApp.Pwa.Controllers
 
             if (!string.IsNullOrEmpty(apprenticeId))
             {
-                int yearValue = DateTime.Now.Year;
-                var yearSet = Request.Cookies[Constants.TaskFilterYearCookieName];
-                if (yearSet != null)
+                var tasks = await GetTasks(apprenticeId, Constants.DoneStatus, Constants.TaskFiltersDoneCookieName, Request.Cookies[Constants.TaskFilterSortCookieName]);
+
+                if (tasks != null)
                 {
-                    yearValue = int.Parse(Request.Cookies[Constants.TaskFilterYearCookieName]);
+                    return PartialView("_TasksDone", new TasksPageModel { Year = DateTime.Now.Year, Tasks = tasks });
                 }
-
-                var taskResult = await _client.GetApprenticeTasks(new Guid(apprenticeId), Constants.DoneStatus, new DateTime(2010, 1, 1), new DateTime(2030, 1, 1));
-
-                if (taskResult == null || taskResult.Tasks.Count == 0)
-                {
-                    return PartialView("_TasksNotStarted", "Done");
-                }
-
-                if (Request.Cookies[Constants.TaskFiltersDoneCookieName] != null)
-                {
-                    var filterTasks = Filter.FilterTaskResults(taskResult.Tasks, Request.Cookies[Constants.TaskFiltersDoneCookieName]);
-
-                    if (filterTasks.HasFilterRun.Equals(true))
-                    {
-                        taskResult.Tasks = filterTasks.FilteredTasks;
-                    }
-                }
-
-                // sorting
-                var sortCookie = Request.Cookies[Constants.TaskFilterSortCookieName];
-                if (sortCookie != null)
-                {
-                    taskResult.Tasks = sortCookie switch
-                    {
-                        "due_date" => taskResult.Tasks.OrderBy(x => x.DueDate).ToList(),
-                        "recently_added" => taskResult.Tasks.OrderByDescending(x => x.TaskId).ToList(),
-                        _ => taskResult.Tasks.OrderBy(x => x.DueDate).ToList(),
-                    };
-                }
-
-                var vm = new TasksPageModel
-                {
-                    Year = DateTime.Now.Year,
-                    Tasks = taskResult.Tasks,
-                };
-
-                return PartialView("_TasksDone", vm);
             }
             return PartialView("_TasksNotStarted", "Done");
+        }
+        
+        private async Task<List<ApprenticeTask>?> GetTasks(string apprenticeId, int status, string filtersCookieName, string? sort)
+        {
+            var taskResult = await _client.GetApprenticeTasks(new Guid(apprenticeId), status, new DateTime(2010, 1, 1), new DateTime(2030, 1, 1));
+
+            if (taskResult == null || taskResult.Tasks.Count == 0)
+            {
+                return null;
+            }
+
+            var filtersCookie = Request.Cookies[filtersCookieName];
+            if (filtersCookie != null)
+            {
+                var filterTasks = Filter.FilterTaskResults(taskResult.Tasks, filtersCookie);
+
+                if (filterTasks.HasFilterRun.Equals(true))
+                {
+                    taskResult.Tasks = filterTasks.FilteredTasks;
+                }
+            }
+
+            if (sort == null)
+            {
+                return taskResult.Tasks;
+            }
+
+            return sort switch
+            {
+                "due_date" => taskResult.Tasks.OrderBy(x => x.DueDate).ToList(),
+                "recently_added" => taskResult.Tasks.OrderByDescending(x => x.TaskId).ToList(),
+                _ => taskResult.Tasks.OrderBy(x => x.DueDate).ToList(),
+            };
         }
 
         [HttpGet]
