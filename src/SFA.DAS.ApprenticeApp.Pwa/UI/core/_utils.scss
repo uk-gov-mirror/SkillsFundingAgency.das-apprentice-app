@@ -1,0 +1,11 @@
+@use "govuk/helpers/index" as helpers;
+
+.show-if-js-enabled {
+  display: none;
+}
+
+.js-enabled {
+  .show-if-js-enabled {
+    display: block;
+  }
+}
